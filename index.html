@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>報價單系統</title>
+  <style>
+    :root {
+      --dark: #4a4a4a;
+      --mid: #6e6e6e;
+      --light-bg: #f7f7f7;
+      --border: #ddd;
+      --accent: #FFA726;
+      --danger: #e53935;
+      --success: #43a047;
+      --info: #1e88e5;
+      --paper: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Microsoft JhengHei', '微軟正黑體', 'PingFang TC', Arial, sans-serif;
+      background: #d5d5d5;
+      min-height: 100vh;
+      font-size: 15px;
+      color: #333;
+    }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar {
+      background: #333;
+      color: #fff;
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .toolbar-title {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #999;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-right: 1px solid #666;
+    }
+    .toolbar-left  { display: flex; align-items: stretch; }
+    .toolbar-center { display: flex; align-items: stretch; flex: 1; justify-content: center; }
+    .toolbar-right { display: flex; align-items: center; gap: 10px; padding-left: 12px; }
+    /* Toolbar cell 樣式 */
+    .toolbar .btn {
+      flex-direction: row;
+      gap: 7px;
+      padding: 0 20px;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+      border-radius: 0;
+      background: transparent !important;
+      color: #ccc;
+      border: none;
+      border-right: 1px solid #666;
+      box-shadow: none;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+      white-space: nowrap;
+    }
+    .toolbar .btn:first-child { border-left: 1px solid #666; }
+    .toolbar .btn:hover { background: #222 !important; color: #fff; filter: none; box-shadow: none; }
+    .toolbar .btn:active { background: #1a1a1a !important; transform: none; }
+    .toolbar .btn svg { width: 15px; height: 15px; opacity: .7; }
+    .toolbar .btn:hover svg { opacity: 1; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: background .15s, transform .1s, box-shadow .15s;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .btn:hover { filter: brightness(1.12); box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+    .btn:active { transform: scale(.97); }
+    .btn svg { flex-shrink: 0; }
+    .btn-green  { background: #43a047; color: #fff; }
+    .btn-blue   { background: #1e88e5; color: #fff; }
+    .btn-orange { background: #fb8c00; color: #fff; }
+    .btn-gray   { background: #555; color: #fff; }
+    .btn-red    { background: #e53935; color: #fff; }
+    .btn-white  { background: #3e3e3e; color: #eee; border: 1px solid #555; }
+    .btn-teal   { background: #00897b; color: #fff; }
+
+    /* ===== TEMPLATE MODAL ===== */
+    .tpl-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 600;
+      align-items: center; justify-content: center;
+    }
+    .tpl-overlay.open { display: flex; }
+    .tpl-modal {
+      background: #fff; border-radius: 10px;
+      width: 420px; max-width: 95vw; max-height: 88vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 8px 36px rgba(0,0,0,.28);
+      overflow: hidden;
+    }
+    .tpl-modal-header {
+      background: #2c2c2c; color: #fff;
+      padding: 14px 18px; font-size: 15px; font-weight: bold;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .tpl-modal-header button {
+      background: none; border: none; color: #fff;
+      font-size: 18px; cursor: pointer; line-height: 1;
+    }
+    .tpl-modal-body { flex: 1; overflow-y: auto; padding: 14px 18px; }
+    .tpl-modal-footer {
+      padding: 12px 18px; border-top: 1px solid #eee;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    .tpl-list { display: flex; flex-direction: column; gap: 8px; }
+    .tpl-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border: 1px solid #e0e0e0;
+      border-radius: 7px; background: #fafafa;
+    }
+    .tpl-item:hover { background: #fff8f0; border-color: var(--accent); }
+    .tpl-name {
+      flex: 1; font-size: 15px; font-weight: 500; cursor: pointer;
+      padding: 2px 4px; border-radius: 4px;
+    }
+    .tpl-name:hover { background: #fff3e0; }
+    .tpl-name-edit {
+      flex: 1; font-size: 15px; font-family: inherit;
+      border: 1px solid var(--accent); border-radius: 4px;
+      padding: 2px 6px; outline: none;
+    }
+    .tpl-tag {
+      font-size: 11px; color: #aaa;
+      background: #f0f0f0; border-radius: 10px;
+      padding: 1px 8px; white-space: nowrap;
+    }
+    .tpl-new-row {
+      display: flex; gap: 8px; align-items: center; width: 100%;
+    }
+    .tpl-new-input {
+      flex: 1; border: 1px solid #ccc; border-radius: 6px;
+      padding: 6px 10px; font-size: 14px; font-family: inherit;
+    }
+    .tpl-new-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ===== DOCS MODAL ===== */
+    .docs-modal { width: 720px; }
+    .docs-toolbar {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      padding: 10px 14px; border-bottom: 1px solid #eee; background: #fafafa;
+    }
+    .docs-search {
+      flex: 1; min-width: 140px; border: 1px solid #ccc; border-radius: 6px;
+      padding: 5px 10px; font-size: 13px; font-family: inherit;
+    }
+    .docs-search:focus { outline: none; border-color: var(--accent); }
+    .docs-filter-btn {
+      font-size: 12px; padding: 4px 10px; border-radius: 14px;
+      border: 1px solid #ddd; background: #fff; cursor: pointer;
+      font-family: inherit; white-space: nowrap; line-height: 1.4;
+    }
+    .docs-filter-btn.active { border-color: var(--accent); background: #fff8f0; font-weight: bold; }
+    .docs-sort-select {
+      border: 1px solid #ccc; border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; font-family: inherit; background: #fff; cursor: pointer;
+    }
+    .docs-type-bar {
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+      padding: 6px 14px 8px; border-bottom: 1px solid #eee; background: #fafafa;
+    }
+    .docs-type-label { font-size: 11px; color: #aaa; white-space: nowrap; margin-right: 2px; }
+    .doc-type-tag {
+      display: inline-block;
+      font-size: 11px; padding: 2px 9px; border-radius: 10px;
+      font-weight: bold; white-space: nowrap;
+      background: #e8eaf6; color: #3949ab;
+    }
+    .docs-stats {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      padding: 7px 14px; border-bottom: 1px solid #eee; background: #f8f9fa;
+      font-size: 12px; color: #666;
+    }
+    .docs-stats strong { color: #333; }
+    .docs-stats .spacer { flex: 1; }
+    .doc-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border: 1px solid #e0e0e0;
+      border-radius: 7px; background: #fafafa; margin-bottom: 7px;
+    }
+    .doc-item:hover { background: #f5f9ff; border-color: #90c8ff; }
+    .doc-item.active { background: #e8f5e9; border-color: #4caf50; }
+    .doc-item-info { flex: 1; min-width: 0; }
+    .doc-item-title { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-item-meta { font-size: 12px; color: #999; margin-top: 2px; }
+    .doc-item-amount { font-size: 13px; font-weight: bold; color: #333; white-space: nowrap; margin-right: 4px; }
+    .doc-status-select {
+      font-size: 11px; padding: 2px 5px; border-radius: 10px;
+      border: none; font-weight: bold; font-family: inherit;
+      cursor: pointer; outline: none; min-width: 58px;
+    }
+    .status-draft     { background: #e3e3e3; color: #555; }
+    .status-sent      { background: #fff3cd; color: #a07000; }
+    .status-active    { background: #cce5ff; color: #004085; }
+    .status-won       { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    .doc-status-label { font-size: 12px; color: #aaa; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    .doc-status-label.saved { color: #4caf50; }
+
+    /* ===== DOCUMENT AREA ===== */
+    .doc-area {
+      display: flex;
+      align-items: flex-start;
+      max-width: 1060px;
+      margin: 28px auto;
+      padding: 0 16px;
+      gap: 14px;
+    }
+
+    /* ===== DOCUMENT ===== */
+    .doc-wrapper {
+      flex: 1;
+      min-width: 0;
+      background: var(--paper);
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      padding: 52px 60px 60px;
+      position: relative;
+    }
+
+    /* ===== EDITABLE INPUT ===== */
+    .ef {
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      background: transparent;
+      width: 100%;
+      padding: 1px 2px;
+    }
+    .ef:hover  { background: #fffbf0; border-bottom: 1px dashed var(--accent); }
+    .ef:focus  { background: #fff8e1; border-bottom: 1px solid var(--accent); }
+
+    textarea.ef {
+      resize: none;
+      line-height: 1.6;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ===== DOC HEADER ===== */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .doc-no-left { font-size: 12px; font-weight: bold; color: var(--dark); width: 240px; }
+    .doc-meta  { text-align: right; font-size: 12px; color: #555; }
+    .doc-meta span { margin-right: 4px; }
+    .doc-meta input { font-size: 12px; width: 120px; text-align: right; }
+    /* 點日期文字觸發日曆，icon 隱藏 */
+    .doc-meta input[type="date"] { cursor: pointer; position: relative; }
+    .doc-meta input[type="date"]::-webkit-calendar-picker-indicator {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+
+    /* ===== TITLE ===== */
+    .doc-title {
+      text-align: center;
+      font-size: 38px;
+      font-weight: bold;
+      letter-spacing: 14px;
+      color: var(--dark);
+      margin: 16px 0 28px;
+    }
+
+    /* ===== CONTACTS ===== */
+    .contacts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .contact-label {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .contact-main { font-size: 16px; font-weight: bold; }
+    .contact-line { margin-bottom: 2px; }
+
+    /* ===== ITEMS TABLE ===== */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 0;
+    }
+    .items-table thead tr {
+      background: var(--dark);
+      color: #fff;
+    }
+    .items-table th {
+      padding: 11px 8px;
+      font-size: 16px;
+      font-weight: normal;
+      text-align: center;
+    }
+    .items-table th:first-child { text-align: left; padding-left: 14px; }
+
+    .items-table tbody tr { border-bottom: 1px solid #eee; }
+    .items-table tbody tr:nth-child(odd)  { background: #f9f9f9; }
+    .items-table tbody tr:nth-child(even) { background: #fff; }
+
+    .items-table td {
+      padding: 9px 8px;
+      vertical-align: middle;
+    }
+    .items-table td:first-child { padding-left: 14px; vertical-align: middle; }
+    /* 單位、數量欄位置中 */
+    .items-table td.cell-center { text-align: center; vertical-align: middle; }
+    /* 列印時隱藏空白細項 */
+    @media print { textarea.item-detail-input:placeholder-shown { display: none; } }
+
+    .item-name-input { font-weight: bold; font-size: 16px; }
+    .item-detail-input { font-size: 16px; color: #555; margin-top: 3px; display: block; }
+
+    /* ===== UNIT MODAL ===== */
+    .unit-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    .unit-modal-overlay.open { display: flex; }
+    .unit-modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 20px 16px;
+      width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.28);
+    }
+    .unit-modal h3 { font-size: 15px; margin-bottom: 14px; color: var(--dark); }
+    .unit-chips {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .unit-chip {
+      padding: 6px 14px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      background: #f5f5f5;
+      transition: background .12s, border-color .12s;
+    }
+    .unit-chip:hover { background: #fff3e0; border-color: var(--accent); }
+    .unit-chip.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .unit-custom-row { display: flex; gap: 8px; align-items: center; }
+    .unit-custom-input {
+      flex: 1; border: 1px solid #ccc; border-radius: 6px;
+      padding: 6px 10px; font-size: 14px; font-family: inherit;
+    }
+    .unit-custom-input:focus { outline: none; border-color: var(--accent); }
+    .unit-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+    .num-cell  { width: 70px;  text-align: center; }
+    .price-cell { width: 100px; text-align: right;  }
+
+    .subtotal-val { text-align: right; padding-right: 8px; font-size: 16px; }
+
+    .action-cell { width: 76px; text-align: center; }
+    .action-btns { display: flex; gap: 4px; justify-content: center; flex-wrap: nowrap; }
+    .icon-btn {
+      width: 22px; height: 22px;
+      border: none; border-radius: 3px;
+      cursor: pointer; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: inherit; padding: 0;
+      transition: opacity .15s;
+    }
+    .icon-btn:hover { opacity: .75; }
+
+    /* ===== ADD ROW BUTTON ===== */
+    .add-row-bar {
+      border: 2px dashed #ccc;
+      text-align: center;
+      padding: 8px;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 16px;
+      margin-bottom: 20px;
+      transition: all .15s;
+    }
+    .add-row-bar:hover { border-color: var(--success); color: var(--success); background: #f0fff0; }
+
+    /* ===== SUMMARY ===== */
+    .summary-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 28px;
+    }
+    .summary-box { width: 320px; }
+
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 12px;
+      font-size: 16px;
+    }
+
+    .sum-label { color: #555; }
+
+    .sum-total {
+      background: var(--dark);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .tax-select {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-size: 12px;
+      font-family: inherit;
+      background: #fff;
+      cursor: pointer;
+    }
+    .discount-input {
+      width: 100px;
+      text-align: right;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    .discount-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ===== NOTES ===== */
+    .notes-section { margin-top: 48px; margin-bottom: 32px; }
+    .notes-title { font-size: 16px; color: #888; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .note-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+    .note-num { min-width: 24px; color: #555; padding-top: 2px; }
+    .note-input { flex: 1; font-size: 16px; }
+    .add-note-bar {
+      font-size: 16px; color: #aaa; cursor: pointer;
+      padding: 4px 0; display: inline-block; margin-top: 4px;
+    }
+    .add-note-bar:hover { color: var(--info); }
+
+    /* ===== SIGNATURE ===== */
+    .sig-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .sig-title { font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+    .sig-row   { margin-bottom: 5px; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+    .sig-row .sig-label { white-space: nowrap; color: #555; }
+    .sig-row input { flex: 1; font-size: 16px; }
+
+    /* ===== DIVIDER ===== */
+    .doc-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0 16px; }
+
+    /* ===== SIDE PANEL ===== */
+    .side-panel {
+      position: sticky;
+      top: 240px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 150;
+      background: #3a3a3a;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.28);
+      overflow: hidden;
+      max-height: calc(100vh - 80px);
+      width: 190px;
+    }
+    .side-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: transparent;
+      color: #e8e8e8;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 500;
+      width: 100%;
+      transition: background .15s, color .15s;
+      letter-spacing: 0.3px;
+      text-align: left;
+    }
+    .side-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .side-btn svg { flex-shrink: 0; opacity: .85; }
+    .side-btn:hover svg { opacity: 1; }
+    .side-btn-active { background: rgba(255,255,255,.15) !important; color: #fff !important; }
+    .side-tpl-section {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .side-tpl-header {
+      font-size: 11px;
+      color: rgba(255,255,255,.45);
+      padding: 12px 16px 6px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+    .side-tpl-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      font-size: 14px;
+      color: #d0d0d0;
+      transition: background .12s, color .12s;
+    }
+    .side-tpl-item:last-child { border-bottom: none; }
+    .side-tpl-item:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .side-tpl-item-name { flex: 1; font-weight: 500; }
+    .side-tpl-item-count { font-size: 11px; color: rgba(255,255,255,.35); white-space: nowrap; }
+
+    /* ===== PAGE BREAK INDICATOR ===== */
+    .page-break-line {
+      position: absolute;
+      left: -60px;
+      right: -60px;
+      height: 0;
+      border-top: 2px dashed #00bcd4;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .page-break-label {
+      position: absolute;
+      right: 4px;
+      top: -18px;
+      font-size: 10px;
+      color: #00bcd4;
+      background: #fff;
+      padding: 0 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    /* ===== PRINT ===== */
+    @media print { .page-break-line { display: none !important; } }
+    @page {
+      size: A4;
+      margin: 15mm 18mm;
+    }
+    @media print {
+      body { background: white; }
+      .toolbar  { display: none !important; }
+      .no-print { display: none !important; }
+      .doc-wrapper {
+        box-shadow: none;
+        margin: 0;
+        padding: 20px 30px 40px;
+        max-width: 100%;
+      }
+      .ef:hover, .ef:focus { background: transparent; border-bottom: none; }
+      .tax-select, .discount-input { border: none; background: transparent; }
+      .add-row-bar, .add-note-bar { display: none; }
+      /* 隱藏 number 微調箭頭 */
+      input[type=number]::-webkit-inner-spin-button,
+      input[type=number]::-webkit-outer-spin-button { display: none !important; }
+      input[type=number] { -moz-appearance: textfield; }
+      /* 隱藏 textarea resize 把手 */
+      textarea { resize: none !important; }
+      /* 隱藏 datalist 下拉圖示 */
+      input[list]::-webkit-calendar-picker-indicator { display: none !important; }
+      /* 細項為空時隱藏 */
+      textarea.print-hide-empty:placeholder-shown { display: none !important; }
+      .items-table tbody tr:nth-child(odd)  { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .items-table thead tr { background: var(--dark) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .sum-total { background: var(--dark) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .doc-wrapper { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar no-print">
+  <div class="toolbar-left">
+    <span class="toolbar-title">📋 報價單系統</span>
+    <button class="btn btn-gray" onclick="openDocsModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      報價單管理
+    </button>
+    <button class="btn btn-teal" onclick="openTplModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      範本管理
+    </button>
+  </div>
+  <div class="toolbar-center">
+    <button class="btn btn-orange" onclick="saveCurrentDoc()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      儲存
+    </button>
+    <button class="btn btn-red" onclick="clearDocument()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      重填
+    </button>
+  </div>
+  <div class="toolbar-right">
+    <button class="btn btn-white" onclick="printDoc()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      列印 PDF
+    </button>
+    <span id="currentDocStatus" class="doc-status-label" title="目前文件狀態">新文件（未儲存）</span>
+  </div>
+</div>
+
+<!-- ===== SIDE PANEL + DOCUMENT ===== -->
+<div class="doc-area">
+
+<!-- ===== SIDE PANEL ===== -->
+<div class="side-panel no-print" id="sidePanel">
+  <button class="side-btn" onclick="newDocumentFromSide()" title="新增報價單">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    新增報價單
+  </button>
+  <button class="side-btn" id="pageBreakBtn" onclick="togglePageBreaks()" title="顯示／隱藏分頁線">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="4 3"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    分頁線
+  </button>
+  <div class="side-tpl-section">
+    <div class="side-tpl-header">範本</div>
+    <div id="sideTplList"></div>
+  </div>
+</div>
+
+<!-- ===== DOCUMENT ===== -->
+<div class="doc-wrapper" id="document">
+
+  <!-- Doc header -->
+  <div class="doc-header">
+    <div>
+      <input class="ef doc-no-left" id="docNo" placeholder="20260501-001" />
+      <div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <select class="ef no-print" id="docType" style="font-size:12px;color:#888;background:transparent;border:none;border-bottom:1px dashed #ccc;cursor:pointer;padding:1px 2px;width:auto" onchange="">
+          <option value="">── 要選擇報價類型 ──</option>
+          <option value="影片製作">影片製作</option>
+          <option value="網頁設計">網頁設計</option>
+          <option value="平面設計">平面設計</option>
+          <option value="空間設計">空間設計</option>
+          <option value="插畫">插畫</option>
+          <option value="SEO">SEO</option>
+          <option value="品牌識別">品牌識別</option>
+          <option value="專案故宇">專案故宇</option>
+          <option value="其他">其他</option>
+        </select>
+        <span class="print-only" id="docTypeLabel" style="display:none;font-size:12px;color:#888"></span>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span></span><input class="ef" type="date" id="docDate" /></div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="doc-title">報　價　單</div>
+
+  <!-- Contacts -->
+  <div class="contacts">
+    <div>
+      <div class="contact-label">製作方聯絡人</div>
+      <div class="contact-line contact-main"><input class="ef" id="myCompany" placeholder="公司／品牌名稱" style="font-size:16px;font-weight:bold" /></div>
+      <div class="contact-line"><input class="ef" id="myName"    placeholder="聯絡人姓名" /></div>
+      <div class="contact-line"><input class="ef" id="myPhone"   placeholder="電話" /></div>
+      <div class="contact-line"><input class="ef" id="myEmail"   placeholder="Email" /></div>
+    </div>
+    <div>
+      <div class="contact-label">委訂方聯絡人</div>
+      <div class="contact-line contact-main"><input class="ef" id="clientCompany" placeholder="公司／單位名稱" style="font-size:16px;font-weight:bold" /></div>
+      <div class="contact-line"><input class="ef" id="clientName"    placeholder="聯絡人姓名" /></div>
+      <div class="contact-line"><input class="ef" id="clientPhone"   placeholder="電話" /></div>
+      <div class="contact-line"><input class="ef" id="clientEmail"   placeholder="Email" /></div>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <table class="items-table" id="itemsTable">
+    <thead>
+      <tr>
+        <th>項目</th>
+        <th style="width:9%">單位</th>
+        <th style="width:9%">數量</th>
+        <th style="width:15%;text-align:right;padding-right:8px">單價</th>
+        <th style="width:14%;text-align:right;padding-right:8px">小計</th>
+        <th class="no-print action-cell">操作</th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody">
+      <!-- dynamic rows -->
+    </tbody>
+  </table>
+
+  <div class="add-row-bar no-print" onclick="addItem()">＋ 點此新增項目</div>
+
+  <!-- Summary -->
+  <div class="summary-wrap">
+    <div class="summary-box">
+      <div class="sum-row">
+        <span class="sum-label">小　　計</span>
+        <span id="subtotalDisplay">0</span>
+      </div>
+      <div class="sum-row">
+        <span class="sum-label">
+          稅　　別：
+          <select class="tax-select no-print" id="taxType" onchange="recalculate()">
+            <option value="none">免稅</option>
+            <option value="excluded" selected>稅外（加5%）</option>
+            <option value="included">稅內（含5%）</option>
+          </select>
+          <span class="print-only" id="taxTypeLabel" style="display:none"></span>
+        </span>
+        <span id="taxDisplay">—</span>
+      </div>
+      <div class="sum-row" id="yearDiscountRow">
+        <span class="sum-label">合約年期：
+          <select class="tax-select no-print" id="yearDiscount" onchange="recalculate()">
+            <option value="1">1 年（無折扣）</option>
+            <option value="2">2 年（95 折）</option>
+            <option value="3">3 年以上（9 折）</option>
+          </select>
+          <span class="print-only" id="yearDiscountLabel" style="display:none"></span>
+        </span>
+        <span></span>
+      </div>
+      <div class="sum-row" id="discountRow">
+        <span class="sum-label">優惠折扣</span>
+        <span>
+          <input type="number" class="discount-input no-print" id="discountAmt" value="0" min="0" step="100" oninput="recalculate()" />
+          <span class="print-only" id="discountLabel" style="display:none"></span>
+        </span>
+      </div>
+      <div class="sum-total">
+        <span>總　計</span>
+        <span id="totalDisplay">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes/Terms -->
+  <div class="notes-section">
+    <div class="notes-title">備　註　條　款</div>
+    <div id="notesList"></div>
+    <span class="add-note-bar no-print" onclick="addNote()">＋ 新增條款</span>
+  </div>
+
+  <!-- Signature -->
+  <div class="sig-section">
+    <div>
+      <div class="sig-title">立約人（製作方）</div>
+      <div class="sig-row"><span class="sig-label">甲方：</span><input class="ef" id="sigMyName"    placeholder="姓名" /></div>
+      <div class="sig-row"><span class="sig-label">地址：</span><input class="ef" id="sigMyAddr"    placeholder="地址" /></div>
+      <div class="sig-row"><span class="sig-label">電話：</span><input class="ef" id="sigMyPhone"   placeholder="電話" /></div>
+      <div class="sig-row" style="margin-top:32px;border-top:1px solid #ccc;padding-top:6px">
+        <span class="sig-label">簽章：</span>
+      </div>
+    </div>
+    <div>
+      <div class="sig-title">受約人（委託方）</div>
+      <div class="sig-row"><span class="sig-label">乙方：</span><input class="ef" id="sigClientName"  placeholder="公司／姓名" /></div>
+      <div class="sig-row"><span class="sig-label">地址：</span><input class="ef" id="sigClientAddr"  placeholder="地址" /></div>
+      <div class="sig-row"><span class="sig-label">電話：</span><input class="ef" id="sigClientPhone" placeholder="電話" /></div>
+      <div class="sig-row" style="margin-top:32px;border-top:1px solid #ccc;padding-top:6px">
+        <span class="sig-label">簽章：</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end doc-wrapper -->
+
+</div><!-- end doc-area -->
+
+<!-- ===== UNIT MODAL ===== -->
+<div class="unit-modal-overlay" id="unitModalOverlay" onclick="closeUnitModal(event)">
+  <div class="unit-modal">
+    <h3>選擇單位</h3>
+    <div class="unit-chips" id="unitChips"></div>
+    <div class="unit-custom-row">
+      <input class="unit-custom-input" id="unitCustomInput" placeholder="自訂單位…" />
+    </div>
+    <div class="unit-modal-footer">
+      <button class="btn btn-gray" onclick="closeUnitModal()">取消</button>
+      <button class="btn btn-green" onclick="confirmUnit()">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DOCS MODAL ===== -->
+<div class="tpl-overlay" id="docsOverlay" onclick="docsOverlayClick(event)">
+  <div class="tpl-modal docs-modal">
+    <div class="tpl-modal-header">
+      <span>📋 我的報價單</span>
+      <button onclick="closeDocsModal()">✕</button>
+    </div>
+    <div class="docs-toolbar">
+      <input class="docs-search" id="docsSearchInput" placeholder="搜尋單號、客戶、類型…" oninput="docsOnSearch(this.value)" />
+      <span id="docsFilterBtns">
+        <button class="docs-filter-btn active" onclick="docsSetStatus('all',this)">全部</button>
+        <button class="docs-filter-btn" onclick="docsSetStatus('draft',this)">草稿</button>
+        <button class="docs-filter-btn" onclick="docsSetStatus('sent',this)">已報價</button>
+        <button class="docs-filter-btn" onclick="docsSetStatus('active',this)">進行中</button>
+        <button class="docs-filter-btn" onclick="docsSetStatus('won',this)">已成交</button>
+        <button class="docs-filter-btn" onclick="docsSetStatus('cancelled',this)">已取消</button>
+      </span>
+      <select class="docs-sort-select" id="docsSortSelect" onchange="docsOnSort(this.value)">
+        <option value="newest">最新優先</option>
+        <option value="oldest">最舊優先</option>
+        <option value="amount">金額高→低</option>
+      </select>
+    </div>
+    <div class="docs-type-bar" id="docsTypeBar"></div>
+    <div class="docs-stats" id="docsStatsBar"></div>
+    <div class="tpl-modal-body">
+      <div id="docsList"></div>
+    </div>
+    <div class="tpl-modal-footer">
+      <button class="btn btn-green" onclick="newDocumentFromModal()">＋ 新增報價單</button>
+    </div>
+  </div>
+</div>
+
+<div class="tpl-overlay" id="tplOverlay" onclick="tplOverlayClick(event)">
+  <div class="tpl-modal">
+    <div class="tpl-modal-header">
+      <span>📁 範本管理</span>
+      <button onclick="closeTplModal()">✕</button>
+    </div>
+    <div class="tpl-modal-body">
+      <div class="tpl-list" id="tplList"></div>
+    </div>
+    <div class="tpl-modal-footer">
+      <div class="tpl-new-row">
+        <input class="tpl-new-input" id="tplNewName" placeholder="輸入新範本名稱…" />
+        <button class="btn btn-green" onclick="saveAsTpl()">💾 另存新範本</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  'use strict';
+
+  let itemIdx = 0;
+  let noteIdx = 0;
+
+  /* ─── INIT ─── */
+  function genDocNo(yyyy, mm, dd, increment = false) {
+    const dateKey  = `${yyyy}${mm}${dd}`;
+    const storeKey = `quo_seq_${dateKey}`;
+    // sessionStorage：重新整理頁面從 001 重起，increment=true 才往上加（清除重填時）
+    let seq = parseInt(sessionStorage.getItem(storeKey) || '0', 10);
+    if (increment) seq += 1;
+    else if (seq === 0) seq = 1;
+    sessionStorage.setItem(storeKey, seq);
+    return `${dateKey}-${String(seq).padStart(3, '0')}`;
+  }
+
+  function init() {
+    initDefaultTpls();
+    // Set today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    document.getElementById('docDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('docNo').value   = genDocNo(yyyy, mm, dd);
+
+    // Blank item
+    addItem();
+
+    // Pre-fill producer
+    document.getElementById('myCompany').value  = '菱想設計工作室';
+    document.getElementById('myName').value     = 'nico';
+    document.getElementById('myPhone').value    = '0988-319650';
+    document.getElementById('myEmail').value    = 'orz0211@gmail.com';
+    document.getElementById('sigMyName').value  = 'nico';
+    document.getElementById('sigMyAddr').value  = '';
+    document.getElementById('sigMyPhone').value = '0988-319650';
+
+    document.getElementById('discountAmt').value = 0;
+
+    recalculate();
+    updateDocStatusUI();
+    renderSideTplList();
+  }
+
+  /* ─── ADD ITEM ─── */
+  function addItem(opts = {}) {
+    itemIdx++;
+    const id      = itemIdx;
+    const name    = opts.name   ?? '';
+    const unit    = opts.unit   ?? '式';
+    const qty     = opts.qty    ?? 1;
+    const price   = opts.price  ?? 0;
+    const detail  = opts.detail ?? '';
+
+    const tbody = document.getElementById('itemsBody');
+    const tr    = document.createElement('tr');
+    tr.id       = `row-${id}`;
+    tr.innerHTML = `
+      <td>
+        <input  class="ef item-name-input" id="name-${id}" placeholder="項目名稱" value="${esc(name)}" />
+        <textarea class="ef item-detail-input print-hide-empty" id="detail-${id}" placeholder="· 細項說明（選填）" rows="2">${esc(detail)}</textarea>
+      </td>
+      <td class="cell-center">
+        <input class="ef num-cell" id="unit-${id}" placeholder="式" value="${esc(unit)}" readonly
+          style="cursor:pointer" onclick="openUnitModal(${id})" />
+      </td>
+      <td class="cell-center">
+        <input class="ef num-cell" type="text" inputmode="numeric" pattern="[0-9]*"
+          id="qty-${id}" value="${qty}" oninput="calcRow(${id})" style="text-align:center" />
+      </td>
+      <td><input class="ef price-cell" type="text" inputmode="numeric" id="price-${id}" value="${price ? Math.round(price).toLocaleString('zh-TW') : ''}" data-raw="${price||0}" step="100" oninput="priceInput(this,${id})" onfocus="priceFocus(this)" onblur="priceBlur(this,${id})" /></td>
+      <td class="subtotal-val" id="sub-${id}">${fmt(qty * price)}</td>
+      <td class="no-print action-cell">
+        <div class="action-btns">
+          <button class="icon-btn" style="background:#e0e0e0" onclick="moveUp(${id})"   title="上移">▲</button>
+          <button class="icon-btn" style="background:#e0e0e0" onclick="moveDown(${id})" title="下移">▼</button>
+          <button class="icon-btn" style="background:#ffcdd2;color:#c62828" onclick="removeItem(${id})" title="刪除">✕</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    autoGrowAll();
+    recalculate();
+  }
+
+  function calcRow(id) {
+    const qty   = parseFloat(document.getElementById(`qty-${id}`)?.value) || 0;
+    const price = parsePriceVal(id);
+    const el    = document.getElementById(`sub-${id}`);
+    if (el) el.textContent = fmt(qty * price);
+    recalculate();
+  }
+
+  function removeItem(id) {
+    document.getElementById(`row-${id}`)?.remove();
+    recalculate();
+  }
+
+  function moveUp(id) {
+    const tr = document.getElementById(`row-${id}`);
+    if (tr?.previousElementSibling) tr.parentNode.insertBefore(tr, tr.previousElementSibling);
+  }
+
+  function moveDown(id) {
+    const tr = document.getElementById(`row-${id}`);
+    if (tr?.nextElementSibling) tr.parentNode.insertBefore(tr.nextElementSibling, tr);
+  }
+
+  /* ─── PRICE HELPERS ─── */
+  function parsePriceVal(id) {
+    const el = document.getElementById(`price-${id}`);
+    if (!el) return 0;
+    return parseFloat((el.value || '').replace(/,/g, '')) || 0;
+  }
+  function priceFocus(el) {
+    const raw = parseFloat((el.value || '').replace(/,/g, '')) || 0;
+    el.value = raw || '';
+  }
+  function priceBlur(el, id) {
+    const raw = parseFloat((el.value || '').replace(/,/g, '')) || 0;
+    el.value = raw ? Math.round(raw).toLocaleString('zh-TW') : '';
+    calcRow(id);
+  }
+  function priceInput(el, id) {
+    // 許就數字輸入，即時重算
+    calcRow(id);
+  }
+
+  /* ─── RECALCULATE ─── */
+  function recalculate() {
+    let subtotal = 0;
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+      const m = tr.id.match(/row-(\d+)/);
+      if (!m) return;
+      const id    = m[1];
+      const qty   = parseFloat(document.getElementById(`qty-${id}`)?.value) || 0;
+      const price = parsePriceVal(id);
+      subtotal   += qty * price;
+    });
+
+    const taxType   = document.getElementById('taxType').value;
+    const yearMode  = document.getElementById('yearDiscount')?.value || '1';
+    const discInput = document.getElementById('discountAmt');
+
+    // 年期折扣：自動計算並鎖定輸入框
+    if (yearMode === '2') {
+      discInput.value   = Math.round(subtotal * 0.05);
+      discInput.readOnly = true;
+      discInput.style.opacity = '0.6';
+    } else if (yearMode === '3') {
+      discInput.value   = Math.round(subtotal * 0.10);
+      discInput.readOnly = true;
+      discInput.style.opacity = '0.6';
+    } else {
+      discInput.readOnly = false;
+      discInput.style.opacity = '';
+    }
+
+    const discount = parseFloat(discInput.value) || 0;
+
+    let taxAmt = 0;
+    let total  = subtotal - discount;
+
+    if (taxType === 'excluded') {
+      taxAmt = Math.round(subtotal * 0.05);
+      total  = subtotal + taxAmt - discount;
+    } else if (taxType === 'included') {
+      taxAmt = Math.round(subtotal - subtotal / 1.05);
+      total  = subtotal - discount;
+    }
+
+    document.getElementById('subtotalDisplay').textContent = `NT$ ${fmt(subtotal)}`;
+    document.getElementById('taxDisplay').textContent      = taxType === 'none' ? '—' : `NT$ ${fmt(taxAmt)}`;
+    document.getElementById('totalDisplay').textContent    = `NT$ ${fmt(total)}`;
+  }
+
+  /* ─── ADD NOTE ─── */
+  function addNote(text = '') {
+    noteIdx++;
+    const id   = noteIdx;
+    const list = document.getElementById('notesList');
+    const div  = document.createElement('div');
+    div.className = 'note-row';
+    div.id        = `note-${id}`;
+    div.innerHTML = `
+      <span class="note-num">${list.children.length + 1}.</span>
+      <input class="ef note-input" value="${esc(text)}" placeholder="輸入備註條款…" />
+      <button class="icon-btn no-print" style="background:#ffcdd2;color:#c62828;min-width:22px" onclick="removeNote(${id})" title="刪除">✕</button>
+    `;
+    list.appendChild(div);
+    reIndexNotes();
+  }
+
+  function removeNote(id) {
+    document.getElementById(`note-${id}`)?.remove();
+    reIndexNotes();
+  }
+
+  function reIndexNotes() {
+    document.querySelectorAll('#notesList .note-row').forEach((el, i) => {
+      el.querySelector('.note-num').textContent = `${i+1}.`;
+    });
+  }
+
+  /* ─── SAVE / LOAD ─── */
+  function collectData() {
+    const items = [];
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+      const m = tr.id.match(/row-(\d+)/);
+      if (!m) return;
+      const id = m[1];
+      items.push({
+        name:   document.getElementById(`name-${id}`)?.value   ?? '',
+        detail: document.getElementById(`detail-${id}`)?.value ?? '',
+        unit:   document.getElementById(`unit-${id}`)?.value   ?? '',
+        qty:    document.getElementById(`qty-${id}`)?.value    ?? 1,
+        price:  parseFloat((document.getElementById(`price-${id}`)?.value || '').replace(/,/g,'')) || 0,
+      });
+    });
+
+    const notes = [];
+    document.querySelectorAll('#notesList .note-input').forEach(inp => notes.push(inp.value));
+
+    const ids = ['docDate','docNo','docType','myCompany','myName','myPhone','myEmail',
+                 'clientCompany','clientName','clientPhone','clientEmail',
+                 'sigMyName','sigMyAddr','sigMyPhone','sigClientName','sigClientAddr','sigClientPhone'];
+    const fields = {};
+    ids.forEach(id => { fields[id] = document.getElementById(id)?.value ?? ''; });
+
+    return { fields, taxType: document.getElementById('taxType').value,
+             discountAmt: document.getElementById('discountAmt').value,
+             yearDiscount: document.getElementById('yearDiscount')?.value || '1',
+             items, notes };
+  }
+
+  function restoreData(data) {
+    Object.entries(data.fields || {}).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+    document.getElementById('taxType').value     = data.taxType    || 'excluded';
+    document.getElementById('discountAmt').value = data.discountAmt ?? 0;
+    const yd = document.getElementById('yearDiscount');
+    const ym = data.yearDiscount || '1';
+    if (yd) yd.value = ym;
+    const dc = document.getElementById('discountAmt');
+    if (ym === '2' || ym === '3') { dc.readOnly = true;  dc.style.opacity = '0.6'; }
+    else                          { dc.readOnly = false; dc.style.opacity = '';    }
+
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0;
+    noteIdx = 0;
+
+    (data.items || []).forEach(it => addItem(it));
+    (data.notes || []).forEach(n  => addNote(n));
+    recalculate();
+    autoGrowAll();
+  }
+
+  function clearDocument() {
+    if (!confirm('確定要清除所有內容並重新填寫？')) return;
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0; noteIdx = 0;
+    ['myCompany','myName','myPhone','myEmail',
+     'clientCompany','clientName','clientPhone','clientEmail',
+     'sigMyName','sigMyAddr','sigMyPhone','sigClientName','sigClientAddr','sigClientPhone']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('discountAmt').value = 0;
+    document.getElementById('taxType').value = 'excluded';
+    const ydClear = document.getElementById('yearDiscount');
+    if (ydClear) ydClear.value = '1';
+    const dcClear = document.getElementById('discountAmt');
+    dcClear.readOnly = false; dcClear.style.opacity = '';
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    document.getElementById('docDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('docNo').value   = genDocNo(yyyy, mm, dd, true);
+    addItem();
+    recalculate();
+    _currentDocId = null;
+    updateDocStatusUI();
+    showToast('已清除，請重新填寫', 'orange');
+  }
+
+  /* ─── HELPERS ─── */
+  function fmt(n) {
+    return Math.round(n).toLocaleString('zh-TW');
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  let toastTimer = null;
+  function showToast(msg, color = 'green') {
+    let t = document.getElementById('_toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = '_toast';
+      t.style.cssText = 'position:fixed;bottom:28px;right:28px;padding:10px 20px;border-radius:6px;' +
+        'color:#fff;font-size:14px;z-index:9999;box-shadow:0 3px 12px rgba(0,0,0,.25);' +
+        'transition:opacity .3s;pointer-events:none;';
+      document.body.appendChild(t);
+    }
+    const colors = { green:'#43a047', orange:'#fb8c00', red:'#e53935' };
+    t.style.background = colors[color] || '#333';
+    t.style.opacity = '1';
+    t.textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+  }
+
+  /* ─── printDoc: clear title to suppress browser print header ─── */
+  function printDoc() {
+    const origTitle = document.title;
+    document.title = ' ';          // 清空標題，避免印在頁首
+    window.print();
+    setTimeout(() => { document.title = origTitle; }, 1000);
+  }
+
+  /* ─── Print: show/hide tax label ─── */
+  window.addEventListener('beforeprint', () => {
+    const dtSel = document.getElementById('docType');
+    const dtLbl = document.getElementById('docTypeLabel');
+    if (dtLbl && dtSel) { dtLbl.textContent = dtSel.value || ''; dtLbl.style.display = dtSel.value ? 'inline' : 'none'; }
+    const sel  = document.getElementById('taxType');
+    const lbl  = document.getElementById('taxTypeLabel');
+    if (lbl) { lbl.textContent = sel.options[sel.selectedIndex].text; lbl.style.display = 'inline'; }
+    const dis       = document.getElementById('discountAmt');
+    const dlbl      = document.getElementById('discountLabel');
+    const yearMode  = document.getElementById('yearDiscount')?.value || '1';
+    const yearSuffix = yearMode === '2' ? '（2年95折）' : yearMode === '3' ? '（3年9折）' : '';
+    if (dlbl) { dlbl.textContent = `NT$ ${fmt(parseFloat(dis.value)||0)}${yearSuffix}`; dlbl.style.display = 'inline'; }
+    // 折扣為 0 時列印隱藏
+    const discountRow = document.getElementById('discountRow');
+    if (discountRow) discountRow.style.display = (parseFloat(dis.value) || 0) === 0 ? 'none' : '';
+    // 合約年期列：年期為1時列印隱藏
+    const yearRow = document.getElementById('yearDiscountRow');
+    if (yearRow) {
+      if (yearMode === '1') {
+        yearRow.style.display = 'none';
+      } else {
+        const yearLbl = document.getElementById('yearDiscountLabel');
+        if (yearLbl) { yearLbl.textContent = yearMode === '2' ? '2 年（95折）' : '3 年以上（9折）'; yearLbl.style.display = 'inline'; }
+      }
+    }
+    // 備註條款為空時列印隱藏
+    const notesSection = document.querySelector('.notes-section');
+    if (notesSection) {
+      const hasNotes = document.getElementById('notesList').children.length > 0;
+      notesSection.style.display = hasNotes ? '' : 'none';
+    }
+  });
+  window.addEventListener('afterprint', () => {
+    const notesSection = document.querySelector('.notes-section');
+    if (notesSection) notesSection.style.display = '';
+    const dtLbl = document.getElementById('docTypeLabel');
+    if (dtLbl) dtLbl.style.display = 'none';
+    const lbl  = document.getElementById('taxTypeLabel');
+    const dlbl = document.getElementById('discountLabel');
+    if (lbl)  lbl.style.display  = 'none';
+    if (dlbl) dlbl.style.display = 'none';
+    const discountRow = document.getElementById('discountRow');
+    if (discountRow) discountRow.style.display = '';
+    const yearRow = document.getElementById('yearDiscountRow');
+    if (yearRow) yearRow.style.display = '';
+    const yearLbl = document.getElementById('yearDiscountLabel');
+    if (yearLbl) yearLbl.style.display = 'none';
+  });
+
+  /* ═══════════════════════════════════════
+     MULTI-DOCUMENT SYSTEM
+  ═══════════════════════════════════════ */
+  const DOC_KEY = 'quo_docs';
+  let _currentDocId = null;
+  let _docsQuery    = '';
+  let _docsStatus   = 'all';
+  let _docsType     = 'all';
+  let _docsSort     = 'newest';
+  let _docsPage     = 1;
+  const DOCS_PER_PAGE = 10;
+
+  const STATUS_LABELS = { draft:'草稿', sent:'已報價', active:'進行中', won:'已成交', cancelled:'已取消' };
+  const STATUS_CLASS  = { draft:'status-draft', sent:'status-sent', active:'status-active', won:'status-won', cancelled:'status-cancelled' };
+
+  function loadDocs() {
+    try { return JSON.parse(localStorage.getItem(DOC_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveDocs(list) {
+    localStorage.setItem(DOC_KEY, JSON.stringify(list));
+  }
+
+  function calcDocTotal(data) {
+    let subtotal = 0;
+    (data?.items || []).forEach(it => {
+      subtotal += (parseFloat(it.qty)||0) * (parseFloat(it.price)||0);
+    });
+    const taxType  = data?.taxType || 'none';
+    const discount = parseFloat(data?.discountAmt) || 0;
+    let total = subtotal - discount;
+    if (taxType === 'excluded') total = Math.round(subtotal * 1.05) - discount;
+    return Math.round(total);
+  }
+
+  function updateDocStatusUI() {
+    const el = document.getElementById('currentDocStatus');
+    if (!el) return;
+    if (_currentDocId) {
+      const d = loadDocs().find(d => d.id === _currentDocId);
+      if (d) {
+        el.textContent = `已儲存：${d.docNo}`;
+        el.title = `${d.docNo}${d.clientCompany ? '｜' + d.clientCompany : ''}`;
+        el.className = 'doc-status-label saved';
+      }
+    } else {
+      el.textContent = '新文件（未儲存）';
+      el.title = '';
+      el.className = 'doc-status-label';
+    }
+  }
+
+  function openDocsModal() {
+    _docsQuery  = '';
+    _docsStatus = 'all';
+    _docsType   = 'all';
+    _docsSort   = 'newest';
+    _docsPage   = 1;
+    const si = document.getElementById('docsSearchInput');
+    if (si) si.value = '';
+    const ss = document.getElementById('docsSortSelect');
+    if (ss) ss.value = 'newest';
+    document.querySelectorAll('.docs-filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    renderDocsTypeBar();
+    renderDocsList();
+    document.getElementById('docsOverlay').classList.add('open');
+  }
+
+  function closeDocsModal() {
+    document.getElementById('docsOverlay').classList.remove('open');
+  }
+
+  function docsOverlayClick(e) {
+    if (e.target === document.getElementById('docsOverlay')) closeDocsModal();
+  }
+
+  function docsOnSearch(val) {
+    _docsQuery = val;
+    _docsPage  = 1;
+    renderDocsList();
+  }
+
+  function docsSetStatus(status, btn) {
+    _docsStatus = status;
+    _docsPage   = 1;
+    document.querySelectorAll('.docs-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDocsList();
+  }
+
+  function docsSetType(type) {
+    _docsType = type;
+    _docsPage = 1;
+    renderDocsTypeBar();
+    renderDocsList();
+  }
+
+  function renderDocsTypeBar() {
+    const allDocs = loadDocs();
+    const types = ['all', ...new Set(allDocs.map(d => d.docType || '').filter(Boolean))];
+    const bar = document.getElementById('docsTypeBar');
+    if (!bar) return;
+    if (types.length <= 1) { bar.innerHTML = ''; return; }
+    bar.innerHTML = '<span class="docs-type-label">類型：</span>' +
+      types.map(t => {
+        const label = t === 'all' ? '全部' : t;
+        const active = _docsType === t;
+        return `<button class="docs-filter-btn${active ? ' active' : ''}" onclick="docsSetType('${t}')">${esc(label)}</button>`;
+      }).join('');
+  }
+
+  function docsOnSort(val) {
+    _docsSort = val;
+    _docsPage = 1;
+    renderDocsList();
+  }
+
+  function renderDocsList() {
+    const allDocs = loadDocs();
+    const q       = _docsQuery.trim().toLowerCase();
+
+    // Filter
+    let docs = allDocs.filter(d => {
+      if (_docsStatus !== 'all' && (d.status||'draft') !== _docsStatus) return false;
+      if (_docsType   !== 'all' && (d.docType||'')     !== _docsType)   return false;
+      if (q) {
+        const hay = `${d.docNo} ${d.clientCompany||''} ${d.docType||''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    // Sort
+    docs = [...docs].sort((a, b) => {
+      if (_docsSort === 'oldest') return new Date(a.updatedAt) - new Date(b.updatedAt);
+      if (_docsSort === 'amount') return (b.total||0) - (a.total||0);
+      return new Date(b.updatedAt) - new Date(a.updatedAt);
+    });
+
+    // Stats bar
+    const statsEl = document.getElementById('docsStatsBar');
+    if (statsEl) {
+      const counts = {};
+      Object.keys(STATUS_LABELS).forEach(s => { counts[s] = allDocs.filter(d => (d.status||'draft') === s).length; });
+      const wonAmt = allDocs.filter(d => d.status === 'won').reduce((s,d) => s+(d.total||0), 0);
+      statsEl.innerHTML =
+        `<span>共 <strong>${allDocs.length}</strong> 張</span>` +
+        Object.entries(STATUS_LABELS).map(([s,l]) =>
+          counts[s] ? `<span><span style="padding:1px 7px;border-radius:8px;font-weight:bold" class="${STATUS_CLASS[s]}">${l}</span> ${counts[s]}</span>` : ''
+        ).join('') +
+        (wonAmt ? `<span class="spacer"></span><span style="color:#155724;font-weight:bold">已成交合計 NT$ ${fmt(wonAmt)}</span>` : '');
+    }
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(docs.length / DOCS_PER_PAGE));
+    if (_docsPage > totalPages) _docsPage = totalPages;
+    const start    = (_docsPage - 1) * DOCS_PER_PAGE;
+    const pageDocs = docs.slice(start, start + DOCS_PER_PAGE);
+
+    // List
+    const el = document.getElementById('docsList');
+    if (docs.length === 0) {
+      el.innerHTML = '<p style="color:#aaa;font-size:14px;text-align:center;padding:20px 0">沒有符合條件的報價單</p>';
+      return;
+    }
+    const rows = pageDocs.map(d => {
+      const date     = new Date(d.updatedAt).toLocaleDateString('zh-TW');
+      const isActive = d.id === _currentDocId;
+      const items    = (d.data?.items || []).length;
+      const title    = d.docNo + (d.clientCompany ? ` ｜ ${d.clientCompany}` : '');
+      const status   = d.status || 'draft';
+      const typeTag  = d.docType ? `<span class="doc-type-tag">${esc(d.docType)}</span>` : '';
+      const opts     = Object.entries(STATUS_LABELS).map(([s,l]) =>
+        `<option value="${s}"${s===status?' selected':''}>${l}</option>`).join('');
+      return `
+        <div class="doc-item${isActive ? ' active' : ''}">
+          <select class="doc-status-select ${STATUS_CLASS[status]}" onchange="setDocStatus(${d.id},this)">${opts}</select>
+          <div class="doc-item-info">
+            <div class="doc-item-title">${esc(title)}${isActive ? ' <span style="font-size:11px;color:#4caf50">● 編輯中</span>' : ''}</div>
+            <div class="doc-item-meta">${date} · ${items} 項目 ${typeTag}</div>
+          </div>
+          ${d.total ? `<div class="doc-item-amount">NT$&nbsp;${fmt(d.total)}</div>` : ''}
+          <button class="btn btn-blue" style="padding:3px 10px;font-size:12px" onclick="loadDoc(${d.id})">開啟</button>
+          <button class="btn btn-gray" style="padding:3px 8px;font-size:12px"  onclick="duplicateDoc(${d.id})" title="複製為新報價單">複製</button>
+          <button class="btn btn-red"  style="padding:3px 8px;font-size:12px"  onclick="deleteDoc(${d.id})">刪除</button>
+        </div>`;
+    }).join('');
+
+    // Page buttons helper
+    const mkBtn = (p, label, disabled, active) =>
+      `<button onclick="docsGoPage(${p})" style="
+        padding:4px 11px;border-radius:5px;font-size:13px;font-family:inherit;cursor:${disabled?'default':'pointer'};
+        border:1px solid ${active?'var(--accent)':'#ccc'};
+        background:${active?'var(--accent)':'#fff'};
+        color:${active?'#fff':'#333'};font-weight:${active?'bold':'normal'};
+        opacity:${disabled?'0.35':'1'};pointer-events:${disabled?'none':'auto'};
+      ">${label}</button>`;
+
+    let pageBtns = '';
+    const pages = new Set([1, totalPages]);
+    for (let p = _docsPage-1; p <= _docsPage+1; p++) { if (p>=1 && p<=totalPages) pages.add(p); }
+    const sorted = [...pages].sort((a,b)=>a-b);
+    let prev = 0;
+    for (const p of sorted) {
+      if (prev && p-prev > 1) pageBtns += `<span style="color:#bbb;padding:0 2px">…</span>`;
+      pageBtns += mkBtn(p, p, false, p===_docsPage);
+      prev = p;
+    }
+
+    el.innerHTML = rows + (totalPages > 1 ? `
+      <div style="display:flex;justify-content:center;align-items:center;gap:5px;margin-top:14px;flex-wrap:wrap;">
+        ${mkBtn(_docsPage-1,'‹',_docsPage===1,false)}
+        ${pageBtns}
+        ${mkBtn(_docsPage+1,'›',_docsPage===totalPages,false)}
+        <span style="font-size:12px;color:#999;margin-left:6px">第 ${_docsPage}／${totalPages} 頁（共 ${docs.length} 張）</span>
+      </div>` : '');
+  }
+
+  function docsGoPage(p) {
+    _docsPage = p;
+    renderDocsList();
+    document.getElementById('docsList').scrollTop = 0;
+  }
+
+  function setDocStatus(id, sel) {
+    const status = sel.value;
+    const docs   = loadDocs();
+    const idx    = docs.findIndex(d => d.id === id);
+    if (idx === -1) return;
+    docs[idx].status = status;
+    saveDocs(docs);
+    renderDocsList();
+    showToast(`狀態：${STATUS_LABELS[status]}`, 'green');
+  }
+
+  function loadDoc(id) {
+    if (id === _currentDocId) { closeDocsModal(); return; }
+    const docs = loadDocs();
+    const doc  = docs.find(d => d.id === id);
+    if (!doc) return;
+    if (!confirm(`開啟「${doc.docNo}」？
+目前未儲存的變更將不會保留。`)) return;
+    restoreData(doc.data);
+    _currentDocId = id;
+    updateDocStatusUI();
+    closeDocsModal();
+    showToast(`已開啟：${doc.docNo}`, 'green');
+  }
+
+  function duplicateDoc(id) {
+    const docs = loadDocs();
+    const doc  = docs.find(d => d.id === id);
+    if (!doc) return;
+    const today = new Date();
+    const yyyy  = today.getFullYear();
+    const mm    = String(today.getMonth()+1).padStart(2,'0');
+    const dd    = String(today.getDate()).padStart(2,'0');
+    const newDocNo = genDocNo(yyyy, mm, dd, true);
+    const newData  = JSON.parse(JSON.stringify(doc.data));
+    if (newData.fields) { newData.fields.docNo = newDocNo; newData.fields.docDate = `${yyyy}-${mm}-${dd}`; }
+    const newId = Date.now();
+    docs.unshift({ id: newId, docNo: newDocNo, clientCompany: doc.clientCompany,
+                   docType: doc.docType || '', total: doc.total, updatedAt: new Date().toISOString(), status: 'draft', data: newData });
+    saveDocs(docs);
+    renderDocsList();
+    showToast(`已複製為新報價單「${newDocNo}」`, 'green');
+  }
+
+  function deleteDoc(id) {
+    const docs = loadDocs();
+    const doc  = docs.find(d => d.id === id);
+    if (!doc) return;
+    if (!confirm(`確定刪除報價單「${doc.docNo}」？`)) return;
+    saveDocs(docs.filter(d => d.id !== id));
+    if (_currentDocId === id) { _currentDocId = null; updateDocStatusUI(); }
+    renderDocsList();
+    showToast('已刪除', 'orange');
+  }
+
+  function newDocumentFromSide() {
+    if (!confirm('新增報價單？（目前未儲存的變更將不會保留）')) return;
+    newDocumentFromModal._skipConfirm = true;
+    _currentDocId = null;
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0; noteIdx = 0;
+    ['myCompany','myName','myPhone','myEmail',
+     'clientCompany','clientName','clientPhone','clientEmail',
+     'sigMyName','sigMyAddr','sigMyPhone','sigClientName','sigClientAddr','sigClientPhone']
+      .forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
+    document.getElementById('discountAmt').value = 0;
+    document.getElementById('taxType').value = 'excluded';
+    const yd = document.getElementById('yearDiscount'); if (yd) yd.value = '1';
+    const dc = document.getElementById('discountAmt'); dc.readOnly = false; dc.style.opacity = '';
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    document.getElementById('docDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('docNo').value   = genDocNo(yyyy, mm, dd, true);
+    document.getElementById('myCompany').value  = '菱想設計工作室';
+    document.getElementById('myName').value     = 'nico';
+    document.getElementById('myPhone').value    = '0988-319650';
+    document.getElementById('myEmail').value    = 'orz0211@gmail.com';
+    document.getElementById('sigMyName').value  = 'nico';
+    document.getElementById('sigMyPhone').value = '0988-319650';
+    addItem();
+    recalculate();
+    updateDocStatusUI();
+    showToast('已建立新報價單', 'green');
+  }
+
+  function newDocumentFromModal() {
+    if (!confirm('新增報價單？（目前未儲存的變更將不會保留）')) return;
+    closeDocsModal();
+    _currentDocId = null;
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0; noteIdx = 0;
+    ['myCompany','myName','myPhone','myEmail',
+     'clientCompany','clientName','clientPhone','clientEmail',
+     'sigMyName','sigMyAddr','sigMyPhone','sigClientName','sigClientAddr','sigClientPhone']
+      .forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
+    document.getElementById('discountAmt').value = 0;
+    document.getElementById('taxType').value = 'excluded';
+    const yd = document.getElementById('yearDiscount'); if (yd) yd.value = '1';
+    const dc = document.getElementById('discountAmt'); dc.readOnly = false; dc.style.opacity = '';
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    document.getElementById('docDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('docNo').value   = genDocNo(yyyy, mm, dd, true);
+    document.getElementById('myCompany').value  = '菱想設計工作室';
+    document.getElementById('myName').value     = 'nico';
+    document.getElementById('myPhone').value    = '0988-319650';
+    document.getElementById('myEmail').value    = 'orz0211@gmail.com';
+    document.getElementById('sigMyName').value  = 'nico';
+    document.getElementById('sigMyPhone').value = '0988-319650';
+    addItem();
+    recalculate();
+    updateDocStatusUI();
+    showToast('已建立新報價單', 'green');
+  }
+
+  /* ─── AUTO-GROW TEXTAREA ─── */
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  // 委派：item detail 輸入時自動撐高
+  document.addEventListener('input', e => {
+    if (e.target.classList.contains('item-detail-input')) autoGrow(e.target);
+  });
+  // focus 時若空白則預設插入第一個子彈點
+  document.addEventListener('focusin', e => {
+    const el = e.target;
+    if (!el.classList.contains('item-detail-input')) return;
+    if (el.value === '') {
+      el.value = '· ';
+      autoGrow(el);
+      // 游標移到末尾
+      el.selectionStart = el.selectionEnd = el.value.length;
+    }
+  });
+  // blur 時若只剩 '· ' 則清空
+  document.addEventListener('focusout', e => {
+    const el = e.target;
+    if (!el.classList.contains('item-detail-input')) return;
+    if (el.value.trim() === '·' || el.value === '· ') {
+      el.value = '';
+      autoGrow(el);
+    }
+  });
+  // Enter 在細項說明中插入子彈點
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const el = e.target;
+    if (!el.classList.contains('item-detail-input')) return;
+    e.preventDefault();
+    const start = el.selectionStart;
+    const end   = el.selectionEnd;
+    const val   = el.value;
+    const lineStart   = val.lastIndexOf('\n', start - 1) + 1;
+    const currentLine = val.substring(lineStart, start);
+    const bullet = /^[\s]*[\u00b7\u2022\-]/.test(currentLine) ? '\u00b7 ' : '';
+    el.value = val.substring(0, start) + '\n' + bullet + val.substring(end);
+    el.selectionStart = el.selectionEnd = start + 1 + bullet.length;
+    autoGrow(el);
+  });
+  // 初始化已有內容的 textarea
+  function autoGrowAll() {
+    document.querySelectorAll('textarea.item-detail-input').forEach(autoGrow);
+  }
+
+  /* ─── UNIT MODAL ─── */
+  const UNIT_OPTIONS = ['式','集','件','項','個','張','份','組','套','批','月','天','小時','字','頁'];
+  let _unitTargetId = null;
+
+  function openUnitModal(id) {
+    _unitTargetId = id;
+    const current = document.getElementById(`unit-${id}`)?.value || '';
+    const chips   = document.getElementById('unitChips');
+    chips.innerHTML = UNIT_OPTIONS.map(u =>
+      `<span class="unit-chip${u === current ? ' selected' : ''}" onclick="selectChip(this,'${u}')">${u}</span>`
+    ).join('');
+    const custom = document.getElementById('unitCustomInput');
+    custom.value = UNIT_OPTIONS.includes(current) ? '' : current;
+    document.getElementById('unitModalOverlay').classList.add('open');
+    // 若非預設選項，聚焦自訂欄
+    if (!UNIT_OPTIONS.includes(current)) custom.focus();
+  }
+
+  function selectChip(el, val) {
+    if (_unitTargetId === null) return;
+    const inp = document.getElementById(`unit-${_unitTargetId}`);
+    if (inp) inp.value = val;
+    closeUnitModal();
+  }
+
+  function confirmUnit() {
+    if (_unitTargetId === null) return;
+    const custom   = document.getElementById('unitCustomInput').value.trim();
+    const selected = document.querySelector('.unit-chip.selected');
+    const val      = custom || (selected ? selected.textContent : '');
+    if (val) {
+      const inp = document.getElementById(`unit-${_unitTargetId}`);
+      if (inp) inp.value = val;
+    }
+    closeUnitModal();
+  }
+
+  function closeUnitModal(e) {
+    if (e && e.target !== document.getElementById('unitModalOverlay')) return;
+    document.getElementById('unitModalOverlay').classList.remove('open');
+    _unitTargetId = null;
+  }
+
+  /* ═══════════════════════════════════════
+     TEMPLATE SYSTEM
+  ═══════════════════════════════════════ */
+  const TPL_KEY = 'quo_templates';
+
+  // 只儲存結構性資料（項目、備註、稅別），不含客戶資料
+  function collectTplData() {
+    const items = [];
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+      const m = tr.id.match(/row-(\d+)/);
+      if (!m) return;
+      const id = m[1];
+      items.push({
+        name:   document.getElementById(`name-${id}`)?.value   ?? '',
+        detail: document.getElementById(`detail-${id}`)?.value ?? '',
+        unit:   document.getElementById(`unit-${id}`)?.value   ?? '',
+        qty:    document.getElementById(`qty-${id}`)?.value    ?? 1,
+        price:  parseFloat((document.getElementById(`price-${id}`)?.value || '').replace(/,/g,'')) || 0,
+      });
+    });
+    const notes = [];
+    document.querySelectorAll('#notesList .note-input').forEach(inp => notes.push(inp.value));
+    return {
+      taxType:     document.getElementById('taxType').value,
+      discountAmt: document.getElementById('discountAmt').value,
+      docType:     document.getElementById('docType')?.value || '',
+      items, notes
+    };
+  }
+
+  function applyTplData(data) {
+    document.getElementById('taxType').value     = data.taxType     || 'excluded';
+    document.getElementById('discountAmt').value = data.discountAmt ?? 0;
+    const dtEl = document.getElementById('docType');
+    if (dtEl) dtEl.value = data.docType || '';
+    // 套用範本時重置年期折扣
+    const ydTpl = document.getElementById('yearDiscount');
+    if (ydTpl) ydTpl.value = '1';
+    const dcTpl = document.getElementById('discountAmt');
+    dcTpl.readOnly = false; dcTpl.style.opacity = '';
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0; noteIdx = 0;
+    (data.items || []).forEach(it => addItem(it));
+    (data.notes || []).forEach(n  => addNote(n));
+    recalculate();
+  }
+
+  function loadTpls() {
+    try { return JSON.parse(localStorage.getItem(TPL_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveTpls(list) {
+    localStorage.setItem(TPL_KEY, JSON.stringify(list));
+  }
+
+  // 預設範本定義
+  const DEFAULT_TPLS = [
+    {
+      name: '影片報價',
+      docType: '影片製作',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: '影片企劃與腳本', unit: '式', qty: 1, price: 15000, detail: '' },
+        { name: '拍攝製作', unit: '天', qty: 1, price: 30000, detail: '· 含攝影師、燈光設備\n· 拍攝場地費另計' },
+        { name: '後製剪輯', unit: '式', qty: 1, price: 20000, detail: '· 粗剪、精剪\n· 色彩校正\n· 音效混音' },
+        { name: '動態字幕製作', unit: '式', qty: 1, price: 8000, detail: '' },
+      ],
+      notes: [
+        '討論風格後進行製作，風格確認後進入全案製作，風格修改以三次為限。',
+        '影片校對修改次數以5次為限。',
+        '付款方式：簽約後訂金50%，結案確認後尾款50%。',
+        '所有稿件的設計與創意之智慧財產權均為委託方所有。',
+      ]
+    },
+    {
+      name: '網頁報價',
+      docType: '網頁設計',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: '網站規劃與 UI 設計', unit: '式', qty: 1, price: 25000, detail: '· 版面規劃\n· 視覺設計稿（含首頁＋內頁）' },
+        { name: '前端切版開發', unit: '頁', qty: 5, price: 8000, detail: '· RWD 響應式設計\n· HTML / CSS / JS' },
+        { name: '後端系統開發', unit: '式', qty: 1, price: 30000, detail: '' },
+        { name: '網站上線部署', unit: '式', qty: 1, price: 5000, detail: '' },
+      ],
+      notes: [
+        '網站修改以確認稿為準，確認後之修改另行報價。',
+        '瀏覽器相容：Chrome、Firefox、Safari 最新版本。',
+        '付款方式：簽約後訂金40%，完成設計稿30%，結案尾款30%。',
+      ]
+    },
+    {
+      name: '空間報價',
+      docType: '空間設計',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: '空間視覺設計規劃', unit: '式', qty: 1, price: 20000, detail: '· 平面配置圖\n· 3D 示意圖' },
+        { name: '視覺識別應用設計', unit: '式', qty: 1, price: 15000, detail: '· 指標系統\n· 牆面圖文設計' },
+        { name: '輸出製作監工', unit: '式', qty: 1, price: 10000, detail: '' },
+      ],
+      notes: [
+        '設計修改以三次為限，超出另計。',
+        '輸出材料費、施工費另報。',
+        '付款方式：簽約後訂金50%，驗收後尾款50%。',
+      ]
+    },
+    {
+      name: 'SEO 報價',
+      docType: 'SEO',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: 'SEO 健診與關鍵字研究', unit: '式', qty: 1, price: 15000, detail: '' },
+        { name: '網站內容優化', unit: '頁', qty: 10, price: 2000, detail: '· 標題標籤、Meta 描述\n· 內文關鍵字佈局' },
+        { name: '外部連結建立', unit: '月', qty: 3, price: 8000, detail: '' },
+        { name: '成效報告', unit: '月', qty: 3, price: 3000, detail: '· 每月排名追蹤\n· 流量分析報告' },
+      ],
+      notes: [
+        'SEO 成效需 3～6 個月才會顯現，無法保證特定排名。',
+        '成效報告每月月底提供。',
+        '付款方式：每月月初預付。',
+      ]
+    },
+    {
+      name: '插畫報價',
+      docType: '插畫',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: '角色設計', unit: '個', qty: 1, price: 8000, detail: '· 正面、側面、背面三視圖\n· 表情包 x5' },
+        { name: '場景插畫', unit: '張', qty: 1, price: 12000, detail: '· A4 全彩\n· 含背景' },
+        { name: '修改費', unit: '次', qty: 1, price: 2000, detail: '· 超出免費修改次數後計費' },
+      ],
+      notes: [
+        '草稿確認後進入上色，上色後修改以色調微調為限。',
+        '免費修改：草稿階段 2 次，完稿後 1 次。',
+        '付款方式：簽約後訂金50%，交稿後尾款50%。',
+        '交付檔案格式：JPG、PNG、PSD（原始檔另議）。',
+      ]
+    },
+    {
+      name: '平面報價',
+      docType: '平面設計',
+      taxType: 'excluded', discountAmt: 0,
+      items: [
+        { name: 'Logo 設計', unit: '式', qty: 1, price: 15000, detail: '· 提供 3 款草案\n· 確認後完稿' },
+        { name: 'DM / 海報設計', unit: '張', qty: 1, price: 5000, detail: '· A4 雙面\n· 含印刷輸出規格' },
+        { name: '名片設計', unit: '式', qty: 1, price: 3000, detail: '· 雙面設計\n· 提供印刷用 AI / PDF' },
+        { name: '品牌手冊', unit: '式', qty: 1, price: 20000, detail: '' },
+      ],
+      notes: [
+        '設計修改以確認稿為準，超出免費次數另計。',
+        '交付格式：AI、PDF、JPG，不含開放原始碼。',
+        '付款方式：簽約後訂金50%，完稿後尾款50%。',
+      ]
+    },
+  ];
+
+  function initDefaultTpls() {
+    const existing = loadTpls();
+    if (existing.length === 0) {
+      saveTpls(DEFAULT_TPLS.map(t => ({ ...t, id: Date.now() + Math.random() })));
+    } else {
+      // 補齊舊範本缺少的 docType
+      const nameMap = {};
+      DEFAULT_TPLS.forEach(t => { nameMap[t.name] = t.docType; });
+      let changed = false;
+      const updated = existing.map(t => {
+        if (!t.docType && nameMap[t.name]) {
+          changed = true;
+          return { ...t, docType: nameMap[t.name] };
+        }
+        return t;
+      });
+      if (changed) saveTpls(updated);
+    }
+  }
+
+  function openTplModal() {
+    renderTplList();
+    document.getElementById('tplNewName').value = '';
+    document.getElementById('tplOverlay').classList.add('open');
+  }
+
+  function closeTplModal() {
+    document.getElementById('tplOverlay').classList.remove('open');
+  }
+
+  function tplOverlayClick(e) {
+    if (e.target === document.getElementById('tplOverlay')) closeTplModal();
+  }
+
+  function renderTplList() {
+    const tpls = loadTpls();
+    const list = document.getElementById('tplList');
+    if (tpls.length === 0) {
+      list.innerHTML = '<p style="color:#aaa;font-size:14px;text-align:center;padding:20px 0">尚無範本，請先另存新範本</p>';
+      return;
+    }
+    list.innerHTML = tpls.map(t => `
+      <div class="tpl-item" id="tpl-item-${t.id}">
+        <span class="tpl-name" onclick="applyTpl('${t.id}')" title="點擊套用">${esc(t.name)}</span>
+        <span class="tpl-tag">${(t.items||[]).length} 項目</span>
+        <button class="btn btn-orange" style="padding:3px 8px;font-size:12px" onclick="updateTpl('${t.id}')" title="以目前內容更新此範本">更新</button>
+        <button class="btn btn-gray"   style="padding:3px 8px;font-size:12px" onclick="renameTpl('${t.id}')" title="重新命名">改名</button>
+        <button class="btn btn-red"    style="padding:3px 8px;font-size:12px" onclick="deleteTpl('${t.id}')" title="刪除">刪除</button>
+      </div>
+    `).join('');
+  }
+
+  function applyTpl(id) {
+    const tpl = loadTpls().find(t => String(t.id) === String(id));
+    if (!tpl) return;
+    if (!confirm(`套用範本「${tpl.name}」？\n（目前的項目與備註將被取代，客戶資料不受影響）`)) return;
+    applyTplData(tpl);
+    closeTplModal();
+    showToast(`已套用範本「${tpl.name}」`, 'green');
+  }
+
+  function updateTpl(id) {
+    const tpls = loadTpls();
+    const idx  = tpls.findIndex(t => String(t.id) === String(id));
+    if (idx === -1) return;
+    if (!confirm(`以目前內容更新範本「${tpls[idx].name}」？`)) return;
+    const fresh = collectTplData();
+    tpls[idx] = { ...tpls[idx], ...fresh };
+    saveTpls(tpls);
+    renderTplList();
+    showToast(`範本「${tpls[idx].name}」已更新`, 'green');
+  }
+
+  function renameTpl(id) {
+    const tpls = loadTpls();
+    const idx  = tpls.findIndex(t => String(t.id) === String(id));
+    if (idx === -1) return;
+    const newName = prompt('請輸入新名稱：', tpls[idx].name);
+    if (!newName || !newName.trim()) return;
+    tpls[idx].name = newName.trim();
+    saveTpls(tpls);
+    renderTplList();
+    showToast('已重新命名', 'green');
+  }
+
+  function deleteTpl(id) {
+    const tpls = loadTpls();
+    const tpl  = tpls.find(t => String(t.id) === String(id));
+    if (!tpl) return;
+    if (!confirm(`確定刪除範本「${tpl.name}」？`)) return;
+    saveTpls(tpls.filter(t => String(t.id) !== String(id)));
+    renderTplList();
+    showToast('範本已刪除', 'orange');
+  }
+
+  function saveAsTpl() {
+    const name = document.getElementById('tplNewName').value.trim();
+    if (!name) { showToast('請輸入範本名稱', 'orange'); return; }
+    const tpls = loadTpls();
+    if (tpls.some(t => t.name === name)) {
+      if (!confirm(`已有同名範本「${name}」，確定覆蓋？`)) return;
+      const idx = tpls.findIndex(t => t.name === name);
+      tpls[idx] = { ...tpls[idx], ...collectTplData(), name };
+      saveTpls(tpls);
+    } else {
+      tpls.push({ id: Date.now(), name, ...collectTplData() });
+      saveTpls(tpls);
+    }
+    document.getElementById('tplNewName').value = '';
+    renderTplList();
+    showToast(`範本「${name}」已儲存`, 'green');
+  }
+
+  /* ─── SIDE TEMPLATE PANEL ─── */
+  function renderSideTplList() {
+    const tpls = loadTpls();
+    const el   = document.getElementById('sideTplList');
+    if (!el) return;
+    if (tpls.length === 0) {
+      el.innerHTML = '<div style="padding:16px 12px;font-size:13px;color:#aaa;text-align:center">尚無範本</div>';
+      return;
+    }
+    el.innerHTML = tpls.map(t => `
+      <div class="side-tpl-item" onclick="applyTplFromSide('${t.id}')">
+        <span class="side-tpl-item-name">${esc(t.name)}</span>
+        <span class="side-tpl-item-count">${(t.items||[]).length}項</span>
+      </div>`
+    ).join('');
+  }
+
+  function applyTplFromSide(id) {
+    const tpl = loadTpls().find(t => String(t.id) === String(id));
+    if (!tpl) return;
+    if (!confirm(`以範本「${tpl.name}」新增報價單？\n（目前未儲存的變更將不會保留）`)) return;
+    // 建立新文件
+    _currentDocId = null;
+    document.getElementById('itemsBody').innerHTML = '';
+    document.getElementById('notesList').innerHTML = '';
+    itemIdx = 0; noteIdx = 0;
+    ['clientCompany','clientName','clientPhone','clientEmail',
+     'sigClientName','sigClientAddr','sigClientPhone']
+      .forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm   = String(today.getMonth()+1).padStart(2,'0');
+    const dd   = String(today.getDate()).padStart(2,'0');
+    document.getElementById('docDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('docNo').value   = genDocNo(yyyy, mm, dd, true);
+    document.getElementById('myCompany').value  = '菱想設計工作室';
+    document.getElementById('myName').value     = 'nico';
+    document.getElementById('myPhone').value    = '0988-319650';
+    document.getElementById('myEmail').value    = 'orz0211@gmail.com';
+    document.getElementById('sigMyName').value  = 'nico';
+    document.getElementById('sigMyPhone').value = '0988-319650';
+    // 套用範本
+    applyTplData(tpl);
+    recalculate();
+    updateDocStatusUI();
+    // 自動儲存
+    saveCurrentDoc(true);
+    showToast(`已以「${tpl.name}」建立新報價單`, 'green');
+  }
+
+  /* ─── PAGE BREAK INDICATOR ─── */
+  let _showPageBreaks = false;
+  // A4 content height ≈ (297-15-15)mm × 96dpi/25.4 ≈ 1009px
+  const PAGE_H = 1009;
+
+  function togglePageBreaks() {
+    _showPageBreaks = !_showPageBreaks;
+    const btn = document.getElementById('pageBreakBtn');
+    if (btn) btn.classList.toggle('side-btn-active', _showPageBreaks);
+    _showPageBreaks ? renderPageBreaks() : removePageBreaks();
+  }
+
+  function renderPageBreaks() {
+    removePageBreaks();
+    const wrapper = document.getElementById('document');
+    const h = wrapper.offsetHeight;
+    const topPad = 52;
+    let y = PAGE_H - topPad;
+    let n = 1;
+    while (y < h - 20) {
+      const line = document.createElement('div');
+      line.className = 'page-break-line';
+      line.style.top = y + 'px';
+      const lbl = document.createElement('span');
+      lbl.className = 'page-break-label';
+      lbl.textContent = `─ 第 ${n} / ${n+1} 頁 分隔線 ─`;
+      line.appendChild(lbl);
+      wrapper.appendChild(line);
+      y += PAGE_H;
+      n++;
+    }
+  }
+
+  function removePageBreaks() {
+    document.querySelectorAll('.page-break-line').forEach(el => el.remove());
+  }
+
+  // ESC 關閉 Modal、Ctrl+S 儲存
+  /* ─── AUTO-SAVE ─── */
+  const AUTO_SAVE_INTERVAL = 60 * 1000; // 每 60 秒
+  let _autoSaveTimer = null;
+  let _lastSavedHash = '';
+
+  function docHash() {
+    // 輕量比對：序列化目前內容
+    try { return JSON.stringify(collectData()); } catch { return ''; }
+  }
+
+  function startAutoSave() {
+    if (_autoSaveTimer) return;
+    _autoSaveTimer = setInterval(() => {
+      const h = docHash();
+      if (h && h !== _lastSavedHash) {
+        saveCurrentDoc(true); // true = 靜默模式
+        _lastSavedHash = h;
+      }
+    }, AUTO_SAVE_INTERVAL);
+  }
+
+  // 定義 saveCurrentDoc，支援 silent 靜默模式（自動儲存用）
+  function saveCurrentDoc(silent = false) {
+    const data          = collectData();
+    const docNo         = document.getElementById('docNo').value.trim() || '未命名';
+    const clientCompany = document.getElementById('clientCompany').value.trim();
+    const docType       = document.getElementById('docType')?.value || '';
+    const total         = calcDocTotal(data);
+    const docs          = loadDocs();
+    const now           = new Date().toISOString();
+    if (_currentDocId) {
+      const idx = docs.findIndex(d => d.id === _currentDocId);
+      if (idx !== -1) {
+        docs[idx] = { ...docs[idx], docNo, clientCompany, docType, total, updatedAt: now, data };
+        saveDocs(docs);
+        updateDocStatusUI();
+        if (!silent) showToast(`報價單「${docNo}」已更新`, 'green');
+        else showAutoSaveHint();
+        return;
+      }
+    }
+    _currentDocId = Date.now();
+    docs.unshift({ id: _currentDocId, docNo, clientCompany, docType, total, updatedAt: now, status: 'draft', data });
+    saveDocs(docs);
+    updateDocStatusUI();
+    _lastSavedHash = docHash();
+    if (!silent) showToast(`報價單「${docNo}」已儲存`, 'green');
+    else showAutoSaveHint();
+  }
+
+  function showAutoSaveHint() {
+    const el = document.getElementById('currentDocStatus');
+    if (!el) return;
+    const orig = el.textContent;
+    el.textContent = '✓ 自動儲存';
+    el.style.color = '#4caf50';
+    setTimeout(() => {
+      updateDocStatusUI();
+      el.style.color = '';
+    }, 2000);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('docsOverlay')?.classList.remove('open');
+      document.getElementById('tplOverlay')?.classList.remove('open');
+      document.getElementById('unitModalOverlay')?.classList.remove('open');
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      saveCurrentDoc();
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    init();
+    _lastSavedHash = docHash();
+    startAutoSave();
+  });
+</script>
+</body>
+</html>
