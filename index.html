@@ -479,7 +479,7 @@
       font-size: 16px;
     }
     .note-num { min-width: 24px; color: #555; padding-top: 2px; }
-    .note-input { flex: 1; font-size: 16px; }
+    .note-input { flex: 1; font-size: 16px; resize: none; overflow: hidden; min-height: 1.6em; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
     .add-note-bar {
       font-size: 16px; color: #aaa; cursor: pointer;
       padding: 4px 0; display: inline-block; margin-top: 4px;
@@ -1095,11 +1095,14 @@
     div.id        = `note-${id}`;
     div.innerHTML = `
       <span class="note-num">${list.children.length + 1}.</span>
-      <input class="ef note-input" value="${esc(text)}" placeholder="輸入備註條款…" />
-      <button class="icon-btn no-print" style="background:#ffcdd2;color:#c62828;min-width:22px" onclick="removeNote(${id})" title="刪除">✕</button>
+      <textarea class="ef note-input" placeholder="\u8f38\u5165\u5099\u8a3b\u689d\u6b3e\u2026" rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(text)}</textarea>
+      <button class="icon-btn no-print" style="background:#ffcdd2;color:#c62828;min-width:22px" onclick="removeNote(${id})" title="\u522a\u9664">\u2715</button>
     `;
     list.appendChild(div);
     reIndexNotes();
+    // 初始化高度
+    const ta = div.querySelector('.note-input');
+    if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
   }
 
   function removeNote(id) {
