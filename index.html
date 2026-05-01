@@ -658,6 +658,15 @@
     </button>
   </div>
   <div class="toolbar-right">
+    <button class="btn btn-white" onclick="exportBackup()" title="匯出所有報價單為 JSON 備份檔">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      備份
+    </button>
+    <label class="btn btn-white" title="從備份檔還原資料" style="cursor:pointer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      還原
+      <input type="file" accept=".json" style="display:none" onchange="importBackup(event)">
+    </label>
     <button class="btn btn-white" onclick="printDoc()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       列印 PDF
@@ -1200,6 +1209,51 @@
   }
 
   let toastTimer = null;
+  /* ─── 備份匯出 ─── */
+  function exportBackup() {
+    const docs = localStorage.getItem('quo_docs') || '[]';
+    const tpls = localStorage.getItem('quo_templates') || '[]';
+    const payload = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), docs: JSON.parse(docs), templates: JSON.parse(tpls) }, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const d    = new Date();
+    const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    a.href = url;
+    a.download = `報價單備份_${dateStr}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('備份檔已下載', 'green');
+  }
+
+  /* ─── 備份匯入 ─── */
+  function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.docs || !Array.isArray(data.docs)) throw new Error('格式錯誤');
+        const existingDocs = JSON.parse(localStorage.getItem('quo_docs') || '[]');
+        const existingTpls = JSON.parse(localStorage.getItem('quo_templates') || '[]');
+        // 合併：以 id 去重，備份資料優先
+        const mergedDocs = [...data.docs];
+        existingDocs.forEach(d => { if (!mergedDocs.find(x => x.id === d.id)) mergedDocs.push(d); });
+        const mergedTpls = [...(data.templates || [])];
+        existingTpls.forEach(t => { if (!mergedTpls.find(x => x.id === t.id)) mergedTpls.push(t); });
+        localStorage.setItem('quo_docs', JSON.stringify(mergedDocs));
+        localStorage.setItem('quo_templates', JSON.stringify(mergedTpls));
+        showToast(`已還原 ${data.docs.length} 筆報價單`, 'green');
+        renderSideTplList();
+      } catch(err) {
+        showToast('還原失敗：檔案格式不正確', 'red');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
   function showToast(msg, color = 'green') {
     let t = document.getElementById('_toast');
     if (!t) {
