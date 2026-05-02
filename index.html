@@ -36,7 +36,6 @@
       height: 52px;
       display: flex;
       align-items: stretch;
-      justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 200;
@@ -54,8 +53,8 @@
       border-right: 1px solid #666;
     }
     .toolbar-left  { display: flex; align-items: stretch; }
-    .toolbar-center { display: flex; align-items: stretch; flex: 1; justify-content: center; }
-    .toolbar-right { display: flex; align-items: center; gap: 10px; padding-left: 12px; }
+    .toolbar-center { display: flex; align-items: stretch; position: absolute; left: calc(50vw - 315px); top: 0; bottom: 0; }
+    .toolbar-right { display: flex; align-items: center; padding-left: 12px; margin-left: auto; }
     /* Toolbar cell 樣式 */
     .toolbar .btn {
       flex-direction: row;
@@ -227,7 +226,7 @@
     .status-active    { background: #cce5ff; color: #004085; }
     .status-won       { background: #d4edda; color: #155724; }
     .status-cancelled { background: #f8d7da; color: #721c24; }
-    .doc-status-label { font-size: 12px; color: #aaa; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    .doc-status-label { font-size: 12px; color: #aaa; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;padding-left: 15px; }
     .doc-status-label.saved { color: #4caf50; }
 
     /* ===== DOCUMENT AREA ===== */
@@ -422,7 +421,8 @@
     /* ===== SUMMARY ===== */
     .summary-wrap {
       display: flex;
-      justify-content: flex-end;
+      flex-direction: column;
+      align-items: flex-end;
       margin-bottom: 28px;
     }
     .summary-box { width: 320px; }
@@ -442,10 +442,11 @@
       color: #fff;
       display: flex;
       justify-content: space-between;
-      padding: 12px 14px;
+      padding: 12px 14px 12px calc(100% - 320px + 12px);
       font-size: 16px;
       font-weight: bold;
       margin-top: 4px;
+      width: 100%;
     }
 
     .tax-select {
@@ -656,6 +657,10 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       重填
     </button>
+    <button class="btn btn-gray" id="pageBreakBtn" onclick="togglePageBreaks()" title="顯示／隱藏分頁線">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="4 3"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      分頁線
+    </button>
   </div>
   <div class="toolbar-right">
     <button class="btn btn-white" onclick="exportBackup()" title="匯出所有報價單為 JSON 備份檔">
@@ -684,10 +689,6 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
     新增報價單
   </button>
-  <button class="side-btn" id="pageBreakBtn" onclick="togglePageBreaks()" title="顯示／隱藏分頁線">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="4 3"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-    分頁線
-  </button>
   <div class="side-tpl-section">
     <div class="side-tpl-header">範本</div>
     <div id="sideTplList"></div>
@@ -704,14 +705,13 @@
       <div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         <select class="ef no-print" id="docType" style="font-size:12px;color:#888;background:transparent;border:none;border-bottom:1px dashed #ccc;cursor:pointer;padding:1px 2px;width:auto" onchange="">
           <option value="">── 要選擇報價類型 ──</option>
-          <option value="影片製作">影片製作</option>
-          <option value="網頁設計">網頁設計</option>
-          <option value="平面設計">平面設計</option>
-          <option value="空間設計">空間設計</option>
+          <option value="影片製作">影片</option>
+          <option value="網頁設計">網頁</option>
+          <option value="平面設計">平面</option>
+          <option value="空間設計">空間</option>
           <option value="插畫">插畫</option>
           <option value="SEO">SEO</option>
-          <option value="品牌識別">品牌識別</option>
-          <option value="專案故宇">專案故宇</option>
+          <option value="品牌識別">品牌</option>
           <option value="其他">其他</option>
         </select>
         <span class="print-only" id="docTypeLabel" style="display:none;font-size:12px;color:#888"></span>
@@ -799,16 +799,16 @@
           <span class="print-only" id="discountLabel" style="display:none"></span>
         </span>
       </div>
-      <div class="sum-total">
-        <span>總　計</span>
-        <span id="totalDisplay">0</span>
-      </div>
+    </div>
+    <div class="sum-total">
+      <span>總　　計</span>
+      <span id="totalDisplay">0</span>
     </div>
   </div>
 
   <!-- Notes/Terms -->
   <div class="notes-section">
-    <div class="notes-title">備　註　條　款</div>
+    <div class="notes-title">備註條款</div>
     <div id="notesList"></div>
     <span class="add-note-bar no-print" onclick="addNote()">＋ 新增條款</span>
   </div>
